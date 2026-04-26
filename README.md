@@ -2,6 +2,8 @@
 
 Predicting whether a song will be a "hit" (Spotify popularity score > 70) based on its audio characteristics and genre. Final project for ECON 3916 (Statistics & Machine Learning for Economics).
 
+**Live app:** https://spotify-hits-predictor.streamlit.app/
+
 ## Problem
 
 Can we forecast whether a track crosses a popularity threshold from its audio features alone? This is a **prediction** problem, not a causal one. We're asking whether audio signatures correlate with hit-likely tracks, not whether changing any specific feature would cause a song to succeed. Popularity is driven by many unobserved factors (marketing budget, artist fame, playlist placement, release timing) that aren't in the feature set.
@@ -33,27 +35,53 @@ The data loads directly from the TidyTuesday GitHub mirror in the notebook, so n
 - Primary metric: ROC-AUC (threshold-independent, appropriate for imbalanced classification)
 - Validation: Stratified 5-fold cross-validation
 
+## Streamlit App
+
+A deployed dashboard lets A&R reps input track audio features (danceability, energy, tempo, etc.) and genre, and returns a predicted hit probability with three pieces of context:
+
+- **Hit probability** displayed against the dataset's base rate and the 0.5 decision threshold
+- **Model confidence** as cross-validated ROC-AUC ± standard deviation across folds
+- **Lift over base rate** to contextualize the predicted probability (e.g., a 50% prediction is ~4× the 12% base rate)
+
+The app also displays the random forest's top features, with an explicit caveat that importance is predictive only and does not imply causation.
+
 ## Files
 
-- `3916_final_project_starter.ipynb` — main notebook (EDA, modeling, cross-validation)
-- `app.py` — Streamlit dashboard *(coming)*
-- `report.pdf` — 5-page SCR-structured writeup *(coming)*
+- `3916_final_project.ipynb` — main notebook (EDA, modeling, cross-validation, feature importance)
+- `app.py` — Streamlit dashboard
+- `requirements.txt` — Python dependencies for the app
+- `model.pkl`, `scaler.pkl`, `feature_columns.pkl`, `genres.pkl`, `metrics.pkl` — saved model artifacts loaded by the app
+- `report.pdf` — 5-page SCR-structured writeup
 
 ## Running the Notebook
 
 ```bash
 pip install pandas numpy matplotlib seaborn scikit-learn
-jupyter notebook 3916_final_project_starter.ipynb
+jupyter notebook 3916_final_project.ipynb
 ```
 
 Or open directly in Google Colab — the data loads from a public URL, no setup needed.
+
+## Running the Streamlit App Locally
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python3 -m streamlit run app.py
+```
+
+The `python3 -m` prefix forces Streamlit to run through the virtual environment's Python, which avoids numpy version mismatch errors when the system Python has an older numpy than the one used to train the model.
+
+The app loads the saved model from `model.pkl` and serves predictions in real time as the user adjusts sliders.
 
 ## Key Caveats
 
 - The model predicts popularity patterns at the time of the snapshot (Jan 2020). Popularity is dynamic and this dataset represents a single point in time.
 - Audio features don't capture marketing, artist reputation, or playlist placement, which drive much of real-world popularity. Model performance has a ceiling set by these unobserved confounders.
 - "Hit" is defined by a popularity threshold of 70, which is an analytical choice rather than an industry-standard cutoff.
+- Random forest feature importance reflects predictive utility, not causal effect. A high importance for `duration_ms` does not mean shortening a song would make it more likely to be a hit.
 
 ## Author
 
-Arinjay — Northeastern University, CS + Economics (April 2026)
+Arinjay — Northeastern University, CS + Economics (May 2026)
